@@ -28,7 +28,12 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UserProfileResponse> getUser(@PathVariable long id) {
-        return ResponseEntity.ok(userService.getUser(id));
+        try {
+            UserProfileResponse userProfileResponse = userService.getUser(id);
+            return ResponseEntity.ok(userProfileResponse);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new UserProfileResponse(e.getMessage(), null, null, null));
+        }
     }
 
     @PostMapping("/signup")
@@ -43,7 +48,7 @@ public class UserController {
         }
         userService.signup(requestDto);
 
-        return "회원가입 성공";
+        return "회원 가입 성공";
     }
 
 

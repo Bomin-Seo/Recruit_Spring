@@ -109,7 +109,6 @@ public class UserService {
             //이미 탈퇴한 회원이라서 재탈퇴 못함
             if (checkUsername.getStatus().equals(UserStatus.SECESSION.getStatus())) {
                 throw new AlreadySignedOutUserCannotBeSignoutAgainException("이미 탈퇴한 회원은 재탈퇴가 불가능");
-
             }
             //사용자가 입력한 비밀번호가 현재 로그인된 비밀번호와 맞는지 확인
             if (!passwordEncoder.matches(checkUsername.getPassword(), signoutRequestDto.getPassword())) {
