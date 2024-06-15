@@ -12,10 +12,12 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -26,6 +28,7 @@ public class LogService {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final RefreshTokenService refreshTokenService;
+    private final MessageSource messageSource;
 
     public void addLog(String username, String action) {
         Log log = new Log(username, action);
@@ -35,10 +38,11 @@ public class LogService {
     public String login(LoginRequestDto dto, HttpServletResponse res) {
 
         User user = userRepository.findByUsername(dto.getUsername()).orElseThrow(()->
-                new EntityNotFoundException("없지롱"));
+                new EntityNotFoundException("해당 사용자가 없습니다."));
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
-            throw new InvalidPasswordException("비밀번호 일치하지 않음");
+            throw new InvalidPasswordException(messageSource.getMessage("invalid.password", null,
+                    "Invalid Password", Locale.getDefault()));
         }
 
         // 토큰 생성

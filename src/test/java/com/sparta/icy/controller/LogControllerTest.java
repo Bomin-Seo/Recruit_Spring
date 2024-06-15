@@ -1,48 +1,117 @@
 package com.sparta.icy.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.icy.config.WebSecurityConfig;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import com.sparta.icy.dto.LoginRequestDto;
+import com.sparta.icy.exception.InvalidPasswordException;
+import com.sparta.icy.service.LogService;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
 @WebMvcTest(
-        controllers = {LogController.class},
+        controllers = LogController.class,
         excludeFilters = {@ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = WebSecurityConfig.class)}
 )
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@RequiredArgsConstructor
 class LogControllerTest {
 
     @Autowired
     private MockMvc mvc;
 
-    @Test
-    void authenticateUser() {
+    @Autowired
+    private WebApplicationContext context;
+
+    @MockBean
+    private LogService logService;
+
+    @BeforeEach
+    void setUp() {
+        mvc = MockMvcBuilders.webAppContextSetup(context)
+                .apply(springSecurity(new MockSpringSecurityFilter()))
+                .build();
     }
 
-    @Test
-    void logout() {
-    }
+    @Nested
+    @DisplayName("로그인 관련 요청")
+    class LoginTests {
+        @Test
+        @DisplayName("로그인 성공")
+        void LoginSuccess() throws Exception {
+            // Given
+            LoginRequestDto loginRequestDto = new LoginRequestDto("username11", "Aa123456789!");
 
-    @Test
-    void addLoginLog() {
-    }
+            // When & Then
+            mvc.perform(MockMvcRequestBuilders.post("/logs/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(new ObjectMapper().writeValueAsString(loginRequestDto)))
+                    .andExpect(MockMvcResultMatchers.status().isOk())
+                    .andExpect(MockMvcResultMatchers.content().string("로그인에 성공하였습니다."));
 
-    @Test
-    @DisplayName("로그인 Page")
-    void login() throws Exception {
-        // when - then
-        mvc.perform(post("/logs/login"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("login"))
-                .andDo(print());
+            verify(logService).login(any(LoginRequestDto.class), any(HttpServletResponse.class));
+        }
+
+        @Test
+        @DisplayName("로그인 실패 - 잘못된 비밀번호")
+        void LoginFailure() throws Exception {
+            // Given
+            LoginRequestDto loginRequestDto = new LoginRequestDto("username11", "invalid_password");
+            when(logService.login(any(LoginRequestDto.class), any(HttpServletResponse.class)))
+                    .thenThrow(InvalidPasswordException.class);
+            // When
+            mvc.perform(MockMvcRequestBuilders.post("/logs/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(new ObjectMapper().writeValueAsString(loginRequestDto)))
+                    .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+            // Then
+            verify(logService).login(any(LoginRequestDto.class), any(HttpServletResponse.class));
+        }
+
+
+//        @Test
+//        @DisplayName("로그인 로그 추가 요청")
+//        void addLoginLog_Success() throws Exception {
+//            // When
+//            MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/logs/addLoginLog")
+//                            .contentType(MediaType.APPLICATION_JSON)
+//                            .content("\"username\""))
+//                    .andExpect(status().isOk())
+//                    .andExpect(content().string("로그 추가 완료"))
+//                    .andReturn();
+//
+//            // Then
+//            verify(logService).addLog("username", "로그인");
+//        }
     }
+//
+//    @Test
+//    @DisplayName("로그아웃 요청")
+//    void logout_Success() throws Exception {
+//        // When
+//        mockMvc.perform(MockMvcRequestBuilders.get("/logs/logout"))
+//                .andExpect(status().isOk())
+//                .andExpect(content().string("로그아웃되었습니다."));
+//
+//        // Then
+//        verify(logService).logout(any(HttpServletResponse.class));
+//    }
 }

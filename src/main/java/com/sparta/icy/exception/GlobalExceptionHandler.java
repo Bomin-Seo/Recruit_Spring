@@ -38,8 +38,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({InvalidPasswordException.class})
-    public ResponseEntity<RestApiException> InvalidPasswordException(AlreadySignedOutUserCannotBeSignoutAgainException ex) {
-        RestApiException restApiException = new RestApiException(ex.getMessage(), HttpStatus.NOT_FOUND.value());
-        return new ResponseEntity<>(restApiException, HttpStatus.NOT_FOUND);
+    public ResponseEntity<RestApiException> invalidPasswordExceptionHandler(InvalidPasswordException ex) {
+        RestApiException restApiException = new RestApiException(ex.getMessage(), HttpStatus.UNAUTHORIZED.value());
+        return new ResponseEntity<>(restApiException, HttpStatus.UNAUTHORIZED);
     }
 }
