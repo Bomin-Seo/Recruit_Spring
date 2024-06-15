@@ -33,32 +33,31 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
-import java.security.Principal;
+
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+// @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @WebMvcTest(
-        controllers = {UserController.class},
+        controllers = {UserController.class, LogController.class},
         excludeFilters = {@ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = WebSecurityConfig.class)}
 )
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserControllerTest {
-
     @Autowired
     private MockMvc mvc;
-
     @Autowired
     private WebApplicationContext context;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @Mock
     private PasswordEncoder passwordEncoder;
 
@@ -71,11 +70,72 @@ class UserControllerTest {
     @MockBean
     UserRepository userRepository;
 
+    private SignupRequestDto signupRequestDto;
+
     @BeforeEach
     void setUp() {
         mvc = MockMvcBuilders.webAppContextSetup(context)
                 .apply(springSecurity(new MockSpringSecurityFilter()))
                 .build();
+    }
+
+    @Nested
+    @Order(1)
+    @DisplayName("회원 가입 요청 처리")
+    class signup {
+        @BeforeEach
+        void setUp() {
+            signupRequestDto = new SignupRequestDto();
+            signupRequestDto.setUsername("username11");
+            signupRequestDto.setNickname("nickname");
+            signupRequestDto.setPassword("Aa123456789!");
+            signupRequestDto.setEmail("test@sparta.com");
+            signupRequestDto.setIntro("hi");
+        }
+        @Test
+        @DisplayName("회원 가입 성공")
+        void SignupSuccess() throws Exception {
+            // when
+            ResultActions resultActions = mvc.perform(post("/users/signup")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(signupRequestDto)));
+            // then
+            resultActions.andExpect(status().isOk())
+                    .andExpect(content().string("회원 가입 성공"));
+
+            assertEquals("회원 가입 성공", resultActions.andReturn().getResponse().getContentAsString(),
+                    () -> "비밀번호 작성 조건 혹은 빈 필드가 없는지 확인해주세요.");
+        }
+
+        @Test
+        @DisplayName("회원 가입 실패 - 비밀번호 입력 조건 미준수")
+        void SignupFail() throws Exception {
+            // given
+            signupRequestDto.setUsername("username12");
+            signupRequestDto.setPassword("A123456789");
+            // when
+            ResultActions resultActions = mvc.perform(post("/users/signup")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(signupRequestDto)));
+            // then
+            resultActions.andExpect(status().isOk())
+                    .andExpect(content().string("회원 가입 실패"));
+        }
+
+        @Test
+        @DisplayName("회원 가입 실패 - 입력되지 않은 field 존재")
+        void SignupFail2() throws Exception {
+            // given
+            signupRequestDto.setEmail("");
+            signupRequestDto.setIntro("");
+            // when
+            ResultActions resultActions = mvc.perform(post("/users/signup")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(signupRequestDto)));
+            // then
+            resultActions.andExpect(status().isOk())
+                    .andExpect(content().string("회원 가입 실패"));
+        }
     }
 
     @Nested
@@ -110,66 +170,6 @@ class UserControllerTest {
             // When, Then
             mvc.perform(MockMvcRequestBuilders.get("/users/{id}", userId))
                     .andExpect(MockMvcResultMatchers.status().isBadRequest());
-        }
-    }
-
-    @Nested
-    @DisplayName("회원 가입 요청 처리")
-    class signup {
-
-        private SignupRequestDto signupRequestDto;
-
-        @BeforeEach
-        void setUp() {
-            signupRequestDto = new SignupRequestDto();
-            signupRequestDto.setUsername("username11");
-            signupRequestDto.setNickname("nickname");
-            signupRequestDto.setPassword("Aa123456789!");
-            signupRequestDto.setEmail("test@sparta.com");
-            signupRequestDto.setIntro("hi");
-        }
-        @Test
-        @DisplayName("회원 가입 성공")
-        void SignupSuccess() throws Exception {
-            // when
-            ResultActions resultActions = mvc.perform(post("/users/signup")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(signupRequestDto)));
-            // then
-            resultActions.andExpect(status().isOk())
-                    .andExpect(content().string("회원 가입 성공"));
-
-            assertEquals("회원 가입 성공", resultActions.andReturn().getResponse().getContentAsString(),
-                    () -> "비밀번호 작성 조건 혹은 빈 필드가 없는지 확인해주세요.");
-        }
-
-        @Test
-        @DisplayName("회원 가입 실패 - 비밀번호 입력 조건 미준수")
-        void SignupFail() throws Exception {
-            // given
-            signupRequestDto.setPassword("A123456789");
-            // when
-            ResultActions resultActions = mvc.perform(post("/users/signup")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(signupRequestDto)));
-            // then
-            resultActions.andExpect(status().isOk())
-                    .andExpect(content().string("회원 가입 실패"));
-        }
-
-        @Test
-        @DisplayName("회원 가입 실패 - 입력되지 않은 field 존재")
-        void SignupFail2() throws Exception {
-            // given
-            signupRequestDto.setEmail("");
-            signupRequestDto.setIntro("");
-            // when
-            ResultActions resultActions = mvc.perform(post("/users/signup")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(signupRequestDto)));
-            // then
-            resultActions.andExpect(status().isOk())
-                    .andExpect(content().string("회원 가입 실패"));
         }
     }
 

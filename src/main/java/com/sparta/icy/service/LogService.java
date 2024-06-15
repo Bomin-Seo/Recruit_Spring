@@ -4,7 +4,7 @@ import com.sparta.icy.dto.LoginRequestDto;
 import com.sparta.icy.entity.Log;
 import com.sparta.icy.entity.RefreshToken;
 import com.sparta.icy.entity.User;
-import com.sparta.icy.error.PasswordDoesNotMatchException;
+import com.sparta.icy.exception.InvalidPasswordException;
 import com.sparta.icy.jwt.JwtUtil;
 import com.sparta.icy.repository.LogRepository;
 import com.sparta.icy.repository.UserRepository;
@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.text.CollationKey;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -39,7 +38,7 @@ public class LogService {
                 new EntityNotFoundException("없지롱"));
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
-            throw new PasswordDoesNotMatchException("비밀번호 일치하지 않음");
+            throw new InvalidPasswordException("비밀번호 일치하지 않음");
         }
 
         // 토큰 생성
