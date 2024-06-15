@@ -32,13 +32,19 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({InvalidUserException.class})
-    public ResponseEntity<RestApiException> notFoundProductExceptionHandler(InvalidUserException ex) {
+    public ResponseEntity<RestApiException> InvalidUserException(InvalidUserException ex) {
         RestApiException restApiException = new RestApiException(ex.getMessage(), HttpStatus.NOT_FOUND.value());
         return new ResponseEntity<>(restApiException, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler({InvalidPasswordException.class})
     public ResponseEntity<RestApiException> invalidPasswordExceptionHandler(InvalidPasswordException ex) {
+        RestApiException restApiException = new RestApiException(ex.getMessage(), HttpStatus.UNAUTHORIZED.value());
+        return new ResponseEntity<>(restApiException, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler({EntityNotFoundException.class})
+    public ResponseEntity<RestApiException> EntityNotFoundExceptionHandler(EntityNotFoundException ex) {
         RestApiException restApiException = new RestApiException(ex.getMessage(), HttpStatus.UNAUTHORIZED.value());
         return new ResponseEntity<>(restApiException, HttpStatus.UNAUTHORIZED);
     }

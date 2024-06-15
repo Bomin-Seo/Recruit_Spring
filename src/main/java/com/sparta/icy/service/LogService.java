@@ -36,9 +36,10 @@ public class LogService {
     }
 
     public String login(LoginRequestDto dto, HttpServletResponse res) {
-
-        User user = userRepository.findByUsername(dto.getUsername()).orElseThrow(()->
-                new EntityNotFoundException("해당 사용자가 없습니다."));
+        User user = userRepository.findByUsername(dto.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        messageSource.getMessage("entity.not.found.user", null,
+                                "해당 사용자가 없습니다.", Locale.getDefault())));
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new InvalidPasswordException(messageSource.getMessage("invalid.password", null,

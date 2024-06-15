@@ -3,8 +3,11 @@ package com.sparta.icy.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.icy.config.WebSecurityConfig;
 import com.sparta.icy.dto.LoginRequestDto;
+import com.sparta.icy.exception.EntityNotFoundException;
 import com.sparta.icy.exception.InvalidPasswordException;
+import com.sparta.icy.repository.UserRepository;
 import com.sparta.icy.service.LogService;
+import com.sparta.icy.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.*;
@@ -20,6 +23,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -43,6 +48,9 @@ class LogControllerTest {
 
     @MockBean
     private LogService logService;
+
+    @MockBean
+    private UserRepository userRepository;
 
     @BeforeEach
     void setUp() {
@@ -86,32 +94,30 @@ class LogControllerTest {
             verify(logService).login(any(LoginRequestDto.class), any(HttpServletResponse.class));
         }
 
+        @Test
+        @DisplayName("로그인 실패 - 등록되지 않은 사용자")
+        void LoginFailure2() throws Exception {
+            // Given
+            LoginRequestDto loginRequestDto = new LoginRequestDto("non_existing_username", "password");
+            when(logService.login(any(LoginRequestDto.class), any(HttpServletResponse.class)))
+                    .thenThrow(EntityNotFoundException.class);
 
-//        @Test
-//        @DisplayName("로그인 로그 추가 요청")
-//        void addLoginLog_Success() throws Exception {
-//            // When
-//            MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/logs/addLoginLog")
-//                            .contentType(MediaType.APPLICATION_JSON)
-//                            .content("\"username\""))
-//                    .andExpect(status().isOk())
-//                    .andExpect(content().string("로그 추가 완료"))
-//                    .andReturn();
-//
-//            // Then
-//            verify(logService).addLog("username", "로그인");
-//        }
+            // When
+            mvc.perform(MockMvcRequestBuilders.post("/logs/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(new ObjectMapper().writeValueAsString(loginRequestDto)))
+                    .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+        }
+
     }
-//
-//    @Test
-//    @DisplayName("로그아웃 요청")
-//    void logout_Success() throws Exception {
-//        // When
-//        mockMvc.perform(MockMvcRequestBuilders.get("/logs/logout"))
-//                .andExpect(status().isOk())
-//                .andExpect(content().string("로그아웃되었습니다."));
-//
-//        // Then
-//        verify(logService).logout(any(HttpServletResponse.class));
-//    }
+    @Test
+    @DisplayName("로그아웃 요청")
+    void logoutSuccess() throws Exception {
+        // When
+        mvc.perform(MockMvcRequestBuilders.get("/logs/logout"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().string("로그아웃되었습니다."));
+        // Then
+        verify(logService).logout(any(HttpServletResponse.class));
+    }
 }
