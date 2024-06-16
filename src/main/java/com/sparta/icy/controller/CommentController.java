@@ -3,6 +3,7 @@ package com.sparta.icy.controller;
 import com.sparta.icy.dto.CommentRequestDto;
 import com.sparta.icy.dto.CommentResponseDto;
 import com.sparta.icy.service.CommentService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,8 +28,9 @@ public class CommentController {
     }
 
     @PutMapping("/{commentId}")
-    public CommentResponseDto updateComment(@PathVariable Long commentId, @RequestBody CommentRequestDto requestDto) {
-        return commentService.updateComment(commentId, requestDto);
+    public ResponseEntity<String> updateComment(@PathVariable Long commentId, @RequestBody CommentRequestDto requestDto) {
+        commentService.updateComment(commentId, requestDto);
+        return ResponseEntity.ok("Comment updated");
     }
 
     @DeleteMapping("/{commentId}")

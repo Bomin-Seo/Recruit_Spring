@@ -1,5 +1,6 @@
 package com.sparta.icy.dto;
 
+import com.sparta.icy.entity.Newsfeed;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,5 +27,15 @@ public class NewsfeedResponseDto {
         this.created_at = created_at;
         this.updated_at = updated_at;
         this.user_id = user_id;
+    }
+
+    public NewsfeedResponseDto(Newsfeed newsfeed) {
+        this.id = newsfeed.getId();
+        this.title = newsfeed.getTitle();
+        this.recruitmentCount = newsfeed.getRecruitmentCount();
+        this.content = newsfeed.getContent();
+        this.created_at = newsfeed.getCreated_at();
+        this.updated_at = newsfeed.getUpdated_at();
+        this.user_id = newsfeed.getUser().getId();
     }
 }

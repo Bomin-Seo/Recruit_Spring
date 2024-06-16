@@ -25,7 +25,7 @@ public class NewsfeedService {
         this.newsfeedRepository = newsfeedRepository;
     }
 
-    public void createNewsfeed(NewsfeedDto newsfeedDto) {
+    public NewsfeedResponseDto createNewsfeed(NewsfeedDto newsfeedDto) {
         User currentUser = getUser();
 
         String title = newsfeedDto.getTitle();
@@ -49,6 +49,7 @@ public class NewsfeedService {
         newsfeed.setUpdated_at(now);
         newsfeed.setUser(currentUser);
         newsfeedRepository.save(newsfeed);
+        return new NewsfeedResponseDto(newsfeed);
     }
 
     private static User getUser() {

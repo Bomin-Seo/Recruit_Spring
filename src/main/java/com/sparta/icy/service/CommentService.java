@@ -8,12 +8,15 @@ import com.sparta.icy.entity.User;
 import com.sparta.icy.repository.CommentRepository;
 import com.sparta.icy.repository.NewsfeedRepository;
 import com.sparta.icy.security.UserDetailsImpl;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.context.MessageSource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +25,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final NewsfeedService newsfeedService;
     private final NewsfeedRepository newsfeedRepository;
+    MessageSource messageSource;
 
     public CommentService(CommentRepository commentRepository, NewsfeedService newsfeedService, NewsfeedRepository newsfeedRepository) {
         this.commentRepository = commentRepository;
@@ -32,8 +36,9 @@ public class CommentService {
     public CommentResponseDto writeComment(Long feed_id, CommentRequestDto requestDto) {
         User currentUser = getUser();
         Newsfeed newsfeed = newsfeedRepository.findById(feed_id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 게시물을 찾을 수 없습니다: " + feed_id));
-
+                .orElseThrow(() -> new EntityNotFoundException(
+                        messageSource.getMessage("entity.not.found.user", null,
+                                "해당 사용자가 없습니다.", Locale.getDefault())));
 
         Comment comment = new Comment(requestDto);
         comment.setContent(requestDto.getContent());

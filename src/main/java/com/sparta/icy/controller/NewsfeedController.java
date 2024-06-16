@@ -22,8 +22,10 @@ public class NewsfeedController {
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping
-    public void createNewsfeed(@RequestBody NewsfeedDto newsfeedDto) {
+    public ResponseEntity<String> createNewsfeed(@RequestBody NewsfeedDto newsfeedDto) {
+
         newsfeedService.createNewsfeed(newsfeedDto);
+        return ResponseEntity.ok("뉴스피드가 작성되었습니다.");
     }
 
     @GetMapping("/{id}")
