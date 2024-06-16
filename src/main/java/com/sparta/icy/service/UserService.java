@@ -89,6 +89,7 @@ public class UserService {
         return hasAlpha && hasDigit && hasSpecialChar;
     }
 
+    @Transactional
     public void signup(SignupRequestDto requestDto) {
         String username = requestDto.getUsername();
         String password = passwordEncoder.encode(requestDto.getPassword());

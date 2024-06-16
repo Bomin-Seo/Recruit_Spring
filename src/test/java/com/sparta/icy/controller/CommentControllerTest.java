@@ -5,7 +5,6 @@ import com.sparta.icy.dto.CommentRequestDto;
 import com.sparta.icy.dto.CommentResponseDto;
 import com.sparta.icy.entity.Comment;
 import com.sparta.icy.exception.EntityNotFoundException;
-import com.sparta.icy.repository.NewsfeedRepository;
 import com.sparta.icy.service.CommentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
