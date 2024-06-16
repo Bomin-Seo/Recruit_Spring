@@ -61,25 +61,7 @@ public class UserServiceTest {
     User user;
     @BeforeEach
     void setUp() {
-//        UserDetailsImpl userDetails = new UserDetailsImpl(new User("username11", "nickname", "Aa123456789!", "test@sparta.com", "intro", UserStatus.IN_ACTION));
-//        Authentication authentication = mock(Authentication.class);
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//        when(authentication.getPrincipal()).thenReturn(userDetails);
-//        User user = new User("username11", "nickname", "Aa123456789!", "test@example.com", "intro", UserStatus.IN_ACTION);
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-////        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-////
-
-
-        // userService.signup(signupRequestDto);
-//
-//        user = new User(1L, "username11", "nickname", "Aa123456789!", "test@example.com", "intro", UserStatus.IN_ACTION);
-//        userRepository.save(user);
-//        when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(user));
-
         user = new User("username11", "nickname", "Aa123456789!", "test@example.com", "intro", UserStatus.IN_ACTION);
-        //when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        //when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(user));
     }
 
     @Nested
