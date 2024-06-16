@@ -59,13 +59,14 @@ public class UserService {
             throw new InvalidPasswordException(messageSource.getMessage("invalid.password", null,
                     "Invalid Password", Locale.getDefault()));
         }
-        if (user.getPassword().equals(req.getNewPassword())) {
+        if (passwordEncoder.matches(req.getCurrentPassword(), currentUser.getPassword())) {
             throw new IllegalArgumentException("현재 비밀번호와 동일한 비밀번호로 수정할 수 없습니다.");
         }
         if (!currentUser.getUsername().equals(user.getUsername())) {
             throw new InvalidAuthException(messageSource.getMessage("invalid.auth",null
             , "Invalid Authority", Locale.getDefault()));
         }
+        req.setNewPassword(passwordEncoder.encode(req.getNewPassword()));
         user.update(req);
         return userRepository.save(user);
     }
@@ -110,18 +111,18 @@ public class UserService {
     public boolean signout(String userDetailsUsername, SignoutRequestDto signoutRequestDto) {
         try {
             User checkUsername = userRepository.findByUsername(userDetailsUsername).orElseThrow();
-            //이미 탈퇴한 회원이라서 재탈퇴 못함
+            // 이미 탈퇴한 회원이라서 재탈퇴 못함
             if (checkUsername.getStatus().equals(UserStatus.SECESSION.getStatus())) {
                 throw new InvalidUserException(messageSource.getMessage(
                         "invalid.user", null, "Invalid User", Locale.getDefault()
                 ));
             }
-            //사용자가 입력한 비밀번호가 현재 로그인된 비밀번호와 맞는지 확인
-            if (!passwordEncoder.matches(checkUsername.getPassword(), signoutRequestDto.getPassword())) {
+            // 사용자가 입력한 비밀번호가 현재 로그인된 비밀번호와 맞는지 확인
+            if (!passwordEncoder.matches(signoutRequestDto.getPassword(), checkUsername.getPassword())) {
                 throw new InvalidPasswordException(messageSource.getMessage("invalid.password", null,
                         "Invalid Password", Locale.getDefault()));
             }
-            //탈퇴한 회원으로 전환
+            // 탈퇴한 회원으로 전환
             checkUsername.setStatus(UserStatus.SECESSION.getStatus());
             userRepository.save(checkUsername); // 변경된 상태를 저장
             // 탈퇴한 회원 로그 추가
@@ -132,6 +133,7 @@ public class UserService {
             return false;
         }
     }
+
 
     private static User getcurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

@@ -28,10 +28,6 @@ import org.springframework.web.context.WebApplicationContext;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 
 @AutoConfigureMockMvc
@@ -62,6 +58,12 @@ public class UserServiceTest {
     @BeforeEach
     void setUp() {
         user = new User("username11", "nickname", "Aa123456789!", "test@example.com", "intro", UserStatus.IN_ACTION);
+    }
+
+    private void setupSecurityContext(User user_) {
+        UserDetailsImpl userDetails = new UserDetailsImpl(user_);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     @Nested
@@ -128,149 +130,145 @@ public class UserServiceTest {
 
     }
 
-//    @Nested
-//    @DisplayName("프로필 수정")
-//    class updateUser {
-//        UserUpdateRequest updateRequest;
-//        LoginRequestDto loginRequestDto;
-//        HttpServletResponse res;
-//        SignupRequestDto signupRequestDto;
-//
-//        @BeforeEach
-//        void setUp() {
-//            signupRequestDto = new SignupRequestDto();
-//            signupRequestDto.setUsername("username12");
-//            signupRequestDto.setPassword("Aa123456789!");
-//            signupRequestDto.setNickname("nickname");
-//            signupRequestDto.setEmail("test@example.com");
-//            signupRequestDto.setIntro("intro");
-//
-//            userService.signup(signupRequestDto);
-//
-//            updateRequest = new UserUpdateRequest();
-//            updateRequest.setCurrentPassword("Aa123456789!");
-//            updateRequest.setNewPassword("aB123456789!");
-//            updateRequest.setNickname("newNickname");
-//
-//            loginRequestDto = new LoginRequestDto("username12", "Aa123456789!");
-//            logService.login(loginRequestDto, res);
-//        }
-//
-//        @Test
-//        @DisplayName("사용자 정보 수정 - 성공")
-//        void updateUser_Success() {
-//            Optional<User> testUser = userRepository.findByUsername("username12");
-//
-//            User updatedUser = userService.updateUser(testUser.get().getId(), updateRequest);
-//            // Then
-//            assertEquals("newNickname", updatedUser.getNickname());
-//            assertTrue(passwordEncoder.matches("aB123456789!", updatedUser.getPassword()));
-//        }
-//
-//        @Test
-//        @DisplayName("사용자 정보 수정 - 잘못된 비밀번호")
-//        void updateUser_WrongPassword() {
-//
-//            UserUpdateRequest updateRequest = new UserUpdateRequest();
-//            updateRequest.setCurrentPassword("wrongPassword");
-//            // When / Then
-//            assertThrows(InvalidPasswordException.class, () -> userService.updateUser(user.getId(), updateRequest));
-//        }
-//
-//        @Test
-//        @DisplayName("사용자 정보 수정 - 현재 비밀번호와 동일한 비밀번호로 수정 불가")
-//        void updateUser_SamePassword() {
-//            // Given
-//            User existingUser = new User("testuser", "nickname", passwordEncoder.encode("password"), "test@example.com", "intro", UserStatus.IN_ACTION);
-//            userRepository.save(existingUser);
-//            UserUpdateRequest updateRequest = new UserUpdateRequest();
-//            updateRequest.setCurrentPassword("password");
-//            updateRequest.setNewPassword("password");
-//
-//            UserDetailsImpl userDetails = new UserDetailsImpl(existingUser);
-//            Authentication authentication = mock(Authentication.class);
-//            SecurityContextHolder.getContext().setAuthentication(authentication);
-//            when(authentication.getPrincipal()).thenReturn(userDetails);
-//
-//            // When / Then
-//            assertThrows(IllegalArgumentException.class, () -> userService.updateUser(existingUser.getId(), updateRequest));
-//        }
-//
-//    }
-//        @Nested
-//        @DisplayName("사용자 탈퇴")
-//        class logout {
-//
-//            private SignoutRequestDto signoutRequestDto;
-//
-//            @BeforeEach
-//            void setUp() {
-//                userRepository.save(user);
-//                signoutRequestDto = new SignoutRequestDto();
-//                signoutRequestDto.setPassword("Aa123456789!");
-//
-//                UserDetailsImpl userDetails = new UserDetailsImpl(user);
-//                Authentication authentication = mock(Authentication.class);
-//                SecurityContextHolder.getContext().setAuthentication(authentication);
-//                when(authentication.getPrincipal()).thenReturn(userDetails);
-//            }
-//
-//            @Test
-//            @DisplayName("사용자 탈퇴 - 성공")
-//            void signout_Success() {
-//
-//                // When
-//                boolean result = userService.signout(user.getUsername(), signoutRequestDto);
-//                // Then
-//                assertTrue(result);
-//                assertEquals(UserStatus.SECESSION.getStatus(), userRepository.findByUsername("username11").get().getStatus());
-//            }
-//
-//            @Test
-//            @DisplayName("사용자 탈퇴 - 잘못된 비밀번호")
-//            void signout_WrongPassword() {
-//                // Given
-//                User existingUser = new User("testuser", "nickname", passwordEncoder.encode("password"), "test@example.com", "intro", UserStatus.IN_ACTION);
-//                userRepository.save(existingUser);
-//                SignoutRequestDto signoutRequestDto = new SignoutRequestDto();
-//                signoutRequestDto.setPassword("wrongPassword");
-//
-//                UserDetailsImpl userDetails = new UserDetailsImpl(existingUser);
-//                Authentication authentication = mock(Authentication.class);
-//                SecurityContextHolder.getContext().setAuthentication(authentication);
-//                when(authentication.getPrincipal()).thenReturn(userDetails);
-//
-//                // When
-//                boolean result = userService.signout(existingUser.getUsername(), signoutRequestDto);
-//
-//                // Then
-//                assertFalse(result);
-//                assertEquals(UserStatus.IN_ACTION.getStatus(), userRepository.findByUsername("testuser").get().getStatus());
-//            }
-//
+    @Nested
+    @DisplayName("프로필 수정")
+    class updateUser {
+        UserUpdateRequest updateRequest;
+        LoginRequestDto loginRequestDto;
+        HttpServletResponse res;
+        SignupRequestDto signupRequestDto;
+
+        @BeforeEach
+        void setUp() {
+            signupRequestDto = new SignupRequestDto();
+            signupRequestDto.setUsername("username12");
+            signupRequestDto.setPassword("Aa123456789!");
+            signupRequestDto.setNickname("nickname");
+            signupRequestDto.setEmail("test@example.com");
+            signupRequestDto.setIntro("intro");
+
+            userService.signup(signupRequestDto);
+
+            updateRequest = new UserUpdateRequest();
+            updateRequest.setCurrentPassword("Aa123456789!");
+            updateRequest.setNewPassword("aB123456789!");
+            updateRequest.setNickname("newNickname");
+            updateRequest.setIntro("new intro");
+
+            User createdUser = userRepository.findByUsername("username12").orElseThrow();
+            setupSecurityContext(createdUser);
+        }
+
+        @Test
+        @DisplayName("사용자 정보 수정 - 성공")
+        void updateUserSuccess() {
+            Optional<User> testUser = userRepository.findByUsername("username12");
+            User updatedUser = userService.updateUser(testUser.get().getId(), updateRequest);
+            // Then
+
+            assertEquals("newNickname", updatedUser.getNickname());
+            assertTrue(passwordEncoder.matches("aB123456789!", updatedUser.getPassword()));
+        }
+
+        @Test
+        @DisplayName("사용자 정보 수정 - 잘못된 비밀번호")
+        void updateUserFailure() {
+            // Given
+            UserUpdateRequest wrongPasswordRequest = new UserUpdateRequest();
+            wrongPasswordRequest.setCurrentPassword("wrongPassword");
+            wrongPasswordRequest.setNewPassword("aB123456789!");
+            wrongPasswordRequest.setNickname("newNickname");
+            wrongPasswordRequest.setIntro("new intro");
+
+            // When / Then
+            Optional<User> testUser = userRepository.findByUsername("username12");
+            assertThrows(InvalidPasswordException.class, () -> userService.updateUser(testUser.get().getId(), wrongPasswordRequest));
+        }
+
+        @Test
+        @DisplayName("사용자 정보 수정 - 현재 비밀번호와 동일한 비밀번호로 수정 불가")
+        void updateUserFailure2() {
+            // Given
+            UserUpdateRequest samePasswordRequest = new UserUpdateRequest();
+            samePasswordRequest.setCurrentPassword("Aa123456789!");
+            samePasswordRequest.setNewPassword("Aa123456789!");
+            samePasswordRequest.setNickname("newNickname");
+            samePasswordRequest.setIntro("new intro");
+
+            // When / Then
+            Optional<User> testUser = userRepository.findByUsername("username12");
+            assertThrows(IllegalArgumentException.class, () -> userService.updateUser(testUser.get().getId(), samePasswordRequest));
+        }
+
+    }
+        @Nested
+        @DisplayName("사용자 탈퇴")
+        class logout {
+            private SignupRequestDto signupRequestDto;
+
+            @BeforeEach
+            void setUp() {
+                signupRequestDto = new SignupRequestDto();
+                signupRequestDto.setUsername("username13");
+                signupRequestDto.setPassword("Aa123456789!");
+                signupRequestDto.setNickname("nickname");
+                signupRequestDto.setEmail("test@example.com");
+                signupRequestDto.setIntro("intro");
+
+                userService.signup(signupRequestDto);
+
+                User createdUser = userRepository.findByUsername("username13").orElseThrow();
+                setupSecurityContext(createdUser);
+            }
+
+            @Test
+            @DisplayName("사용자 탈퇴 - 성공")
+            void signoutSuccess() {
+                SignoutRequestDto signoutRequestDto = new SignoutRequestDto();
+                signoutRequestDto.setPassword("Aa123456789!");
+                // When
+                boolean result = userService.signout("username13", signoutRequestDto);
+                // Then
+                assertTrue(result);
+                Optional<User> signedOutUser = userRepository.findByUsername("username13");
+                assertTrue(signedOutUser.isPresent());
+                assertEquals(UserStatus.SECESSION.getStatus(), signedOutUser.get().getStatus());
+            }
+
+            @Test
+            @DisplayName("사용자 탈퇴 실패 - 잘못된 비밀번호")
+            void signoutFailure() {
+                SignoutRequestDto signoutRequestDto = new SignoutRequestDto();
+                signoutRequestDto.setPassword("A");
+                // When
+                boolean result = userService.signout("username13", signoutRequestDto);
+                // Then
+                assertFalse(result);
+            }
+
 //            @Test
 //            @DisplayName("사용자 탈퇴 - 이미 탈퇴한 사용자")
-//            void signout_AlreadySignedOut() {
-//                // Given
-//                User existingUser = new User("testuser", "nickname", passwordEncoder.encode("password"), "test@example.com", "intro", UserStatus.SECESSION);
-//                userRepository.save(existingUser);
-//                SignoutRequestDto signoutRequestDto = new SignoutRequestDto();
-//                signoutRequestDto.setPassword("password");
+//            void signoutFailure2() {
+//                User testUser = new User("username14", "nickname2", passwordEncoder.encode("Aa123456789!"), "test2@example.com", "intro2", UserStatus.SECESSION);
+//                userRepository.save(testUser);
 //
-//                UserDetailsImpl userDetails = new UserDetailsImpl(existingUser);
-//                Authentication authentication = mock(Authentication.class);
+//                // Simulate user login
+//                UserDetailsImpl userDetails = new UserDetailsImpl(testUser);
+//                Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 //                SecurityContextHolder.getContext().setAuthentication(authentication);
-//                when(authentication.getPrincipal()).thenReturn(userDetails);
 //
 //                // When
-//                boolean result = userService.signout(existingUser.getUsername(), signoutRequestDto);
+//                SignoutRequestDto signoutRequestDto = new SignoutRequestDto();
+//                signoutRequestDto.setPassword("Aa123456789!");
+//
+//                boolean result = userService.signout(testUser.getUsername(), signoutRequestDto);
 //
 //                // Then
 //                assertFalse(result);
-//                assertEquals(UserStatus.SECESSION.getStatus(), userRepository.findByUsername("testuser").get().getStatus());
+//                assertEquals(UserStatus.SECESSION.getStatus(), testUser.getStatus());
 //            }
-//
-//        }
+
+        }
 }
 
 
