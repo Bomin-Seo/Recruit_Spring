@@ -2,10 +2,12 @@ package com.sparta.icy.dto;
 
 import com.sparta.icy.entity.Comment;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 public class CommentResponseDto {
     private final Long id;
     private final String content;

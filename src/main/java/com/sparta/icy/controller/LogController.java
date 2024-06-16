@@ -18,13 +18,7 @@ public class LogController {
     @PostMapping("/login")
     public ResponseEntity<String> authenticateUser(@RequestBody LoginRequestDto loginRequestDto, HttpServletResponse response) {
         System.out.println("로그인 요청 수신: " + loginRequestDto.getUsername());
-
         logService.login(loginRequestDto, response);
-
-        // 로그인 성공 시 로그 추가
-        //logService.addLog(loginRequestDto.getUsername(), "로그인");
-
-
         return ResponseEntity.ok("로그인에 성공하였습니다.");
     }
     @GetMapping("/logout")
